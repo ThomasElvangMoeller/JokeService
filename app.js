@@ -12,7 +12,13 @@ app.use(express.json());
 const Joke = new require('./models/Joke');
 const Jokesites = require('./models/Jokesites');
 
-let siteFetchTime = [5];
+const jokeService = {
+    siteName : 'JokeService After Dark',
+    siteAddress : 'http://JokeService-After-Dark.herokuapp.com',
+    siteSecret : 'simonLugterAfOst'};
+
+//Site fetch time er defineret i millisekunder, 5000 er default
+let siteFetchTime = [5000];
 let siteBlacklist = [];
 
 
@@ -22,7 +28,7 @@ app.post('/api/jokes', function (req, res) {
        res.json({message:'ok',
        joke:result});
    }) .catch(error =>{
-       res.json({message:error})
+       res.json({message:error.toString()})
    })
 });
 
@@ -30,7 +36,7 @@ app.get('/api/jokes', function (req, res) {
     getJokes().then(result =>{
        res.json(result);
    }).catch(error =>{
-       res.json({message:error})
+       res.json({message:error.toString()})
    })
 });
 
@@ -38,7 +44,7 @@ app.get('/api/othersites', function (req, res) {
     getOtherSites().then(result =>{
         res.json(result);
     }).catch(error =>{
-        res.json({message:error})
+        res.json({message:error.toString()})
     })
 });
 
@@ -47,7 +53,7 @@ app.get('/api/otherjokes/:site', function (req, res) {
      res.json(result);
    }).catch(error =>{
        console.log(error);
-       res.json({message:error})
+       res.json({message:error.toString()})
    })
 });
 
@@ -65,20 +71,24 @@ function getOtherJokes(site) {
 
                             let firstTime = Date.now();
                             if (siteFetchTime.length > 30) {
-                                siteFetchTime = [5];
+                                siteFetchTime = [5000];
                             }
 
-                            let timeout = setTimeout(addToBlacklist, getAverageFetchTime() * 1000, e.address);
+                            let timeout = setTimeout(addToBlacklist, getAverageFetchTime(), e.address);
 
                             return fetch((e.address + 'api/jokes'), {method: "GET"})
                                 .then(res => {
                                     let secondTime = Date.now();
-                                    siteFetchTime.push((secondTime - firstTime) / 1000);
+                                    siteFetchTime.push((secondTime - firstTime));
                                     clearTimeout(timeout);
 
                                     return res.json();
                                 })
+                        }else{
+                            throw new Error('Could not find site');
                         }
+                    }else{
+                        throw new Error('Site is Blacklisted');
                     }
                 }
         })
@@ -93,7 +103,8 @@ function getOtherSites() {
    return fetch('https://krdo-joke-registry.herokuapp.com/api/services', { method: "GET"})
         .then(result => {
             if (result.status>= 400) throw new Error(result.status);
-            else return result.json();})
+            else return result.json();
+            })
         .catch(error => {throw new Error(error)});
 }
 
@@ -131,6 +142,27 @@ function addToBlacklist(address){
 
 // createJoke("Hvorfor gik hønen over vejen", "for at komme over på den anden side");
 
+
+let currentjokeservices = getOtherSites();
+let found = false;
+
+for(let e of currentjokeservices){
+    if(e.name === jokeService.siteName || e.address === jokeService.siteAddress){
+        found = true;
+        break;
+    }
+}
+
+if(!found){
+    fetch('http://krdo-joke-registry.heroku.com', { method: "POST",
+        body:jokeService,
+        headers:{'Content-Type':'application/json'}})
+        .then(resultat => {
+            if (resultat.status >= 400)
+                throw new Error(resultat.status);
+        })
+        .catch(fejl => console.log('Fejl: ' + fejl));
+}
 
 app.listen(8080);
 console.log('Lytter på port 8080 ...');
