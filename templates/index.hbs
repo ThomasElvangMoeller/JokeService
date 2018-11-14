@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Dark Room</title>
+</head>
+<body>
+<div class="middle">
+    <div id="sidemenu" class="sidemenu">
+        <div class="jokeservice" style="border: 3px solid black">
+            {{#each jokeservice}}
+                <button value="{{this.address}}" onclick="{console.log('clicked {{this.name}}')}">
+                    <!--TODO Lav noget node-fetch på knapperne-->
+                     {{this.name}}
+                </button> <br>
+            {{/each}}
+        </div>
+    </div>
+    <div id="jokes" class="jokes">
+
+    </div>
+</div>
+
+
+</body>
+</html>

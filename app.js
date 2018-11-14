@@ -3,14 +3,20 @@ const app = express();
 const mongoose = require('mongoose');
 mongoose.Promise = Promise;
 const fetch = require('node-fetch');
+const hbs = require('hbs');
 // const ObjectId = require('mongoose').Schema.ObjectId;
 
 mongoose.connect('mongodb://sa:admin123@ds253783.mlab.com:53783/threeamigojokes', {useNewUrlParser: true});
 
 app.use(express.json());
+app.use(express.static('filer'));
+
+app.set('view engine', 'hbs');
+app.set('views', 'templates');
+hbs.registerPartials('templates');
+
 
 const Joke = new require('./models/Joke');
-const Jokesites = require('./models/Jokesites');
 
 const jokeService = {
     siteName : 'JokeService After Dark',
@@ -23,12 +29,21 @@ let siteBlacklist = [];
 
 
 
+app.get('/', function (req, res) {
+    getOtherSites().then(result => {
+
+        res.render('index', {jokeservice:result})
+    })
+});
+
+
+
 app.post('/api/jokes', function (req, res) {
    createJoke(req.body.setup, req.body.punchline).then(result =>{
        res.json({message:'ok',
        joke:result});
    }) .catch(error =>{
-       res.json({message:error.toString()})
+       res.json({message:error.message})
    })
 });
 
@@ -36,7 +51,7 @@ app.get('/api/jokes', function (req, res) {
     getJokes().then(result =>{
        res.json(result);
    }).catch(error =>{
-       res.json({message:error.toString()})
+       res.json({message:error.message})
    })
 });
 
@@ -44,7 +59,7 @@ app.get('/api/othersites', function (req, res) {
     getOtherSites().then(result =>{
         res.json(result);
     }).catch(error =>{
-        res.json({message:error.toString()})
+        res.json({message:error.message})
     })
 });
 
@@ -53,7 +68,7 @@ app.get('/api/otherjokes/:site', function (req, res) {
      res.json(result);
    }).catch(error =>{
        console.log(error);
-       res.json({message:error.toString()})
+       res.json({message:error.message})
    })
 });
 
@@ -143,7 +158,10 @@ function addToBlacklist(address){
 // createJoke("Hvorfor gik hønen over vejen", "for at komme over på den anden side");
 
 
-let currentjokeservices = getOtherSites();
+let currentjokeservices = [];
+getOtherSites().then(res =>{
+    currentjokeservices = res;
+});
 let found = false;
 
 for(let e of currentjokeservices){
@@ -164,6 +182,7 @@ if(!found){
         .catch(fejl => console.log('Fejl: ' + fejl));
 }
 
-app.listen(8080);
+let port = process.env.PORT || 8080
+app.listen(port);
 console.log('Lytter på port 8080 ...');
 
