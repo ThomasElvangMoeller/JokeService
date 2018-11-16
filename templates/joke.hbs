@@ -1,12 +1,8 @@
-
-<div class="jokebox" style="border: 2px solid grey">
-        <div id="joke-{{this._id}}" class="jokebox" style="border: 2px solid grey"  >
-            {{this.setup}} <br>
-            <script>
-                document.getElementById("joke-{{this._id}}").addEventListener("click", function () {
-                    document.getElementById({{this._id}}).hidden = !document.getElementById({{this._id}}).hidden;
-                })
-            </script>
-            <p class="joke-punchline" hidden id="{{this._id}}" >{{this.punchline}} </p>
-        </div>
+<div class="jokeboxouter" style="border: 2px solid grey">
+{{#each joke}}
+            <div id="joke-{{this._id}}" class="jokeboxinner" style="border: 2px solid grey; padding: 2px"  >
+                {{this.setup}} <br>
+                <p class="joke-punchline" hidden id="{{this._id}}" >{{this.punchline}} </p>
+            </div>
+{{/each}}
 </div>

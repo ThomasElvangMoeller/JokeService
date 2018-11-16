@@ -1,0 +1,17 @@
+
+div.jokeboxinner:hover {
+    cursor: pointer;
+}
+
+div.innermiddle{
+    display: inline;
+    float: left;
+    border: 2px solid black;
+    padding: 2%;
+    border-collapse: collapse;
+
+}
+div.jokecreator{
+    border: 2px solid grey;
+    padding: 5px;
+}

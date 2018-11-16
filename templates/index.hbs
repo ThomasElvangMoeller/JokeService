@@ -3,24 +3,43 @@
 <head>
     <meta charset="UTF-8">
     <title>Dark Room</title>
+    <script src="handlebars-v4.0.12.js"></script>
+    <link rel="stylesheet" href="css.css">
 </head>
 <body>
-<div class="middle">
-    <div id="sidemenu" class="sidemenu">
-        <div class="jokeservice" style="border: 3px solid black">
-            {{#each jokeservice}}
-                <button value="{{this.address}}" onclick="{console.log('clicked {{this.name}}')}">
-                    <!--TODO Lav noget node-fetch på knapperne-->
-                     {{this.name}}
-                </button> <br>
-            {{/each}}
-        </div>
-    </div>
-    <div id="jokes" class="jokes">
 
+<div class="middle">
+    <div id="sidemenu" class="innermiddle">
+        <div class="jokeservice" style="border: 3px solid black; padding: 10px" >
+            {{#each jokeservice}}
+                {{#if this.address}}
+                <button style="padding: 3px" class="jokeservice" value="{{this._id}}">
+                     {{this.name}}
+                </button>
+                    <a href="{{this.address}}">Link</a>
+                    <br>
+                {{/if}}
+            {{/each}}
+        </div><br>
+        Note: nogle knapper virker ikke fordi deres service ikke er sat rigtigt op
+    </div>
+    <div id="jokes" class="innermiddle">
+        Vælg jokes fra en anden kilde
+    </div>
+    <div id="ownjokes" class="innermiddle">
+        <h2>Vores Jokes</h2>
+        <div id="jokecreator" class="jokecreator">
+                <label for="setupinput">Setup: </label><input id="setupinput" type="text">
+                <label for="punchlineinput">Punchline: </label><input id="punchlineinput" type="text">
+                <button id="jokesubmit" type="button">Send Joke</button>
+            <span id="jokeerror"></span>
+        </div>
+        <div id="jokesownjokes" class="jokesownjokes">
+
+        </div>
     </div>
 </div>
 
-
+<script rel="script" src="index.js"></script>
 </body>
 </html>

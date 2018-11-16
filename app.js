@@ -8,8 +8,7 @@ const hbs = require('hbs');
 
 mongoose.connect('mongodb://sa:admin123@ds253783.mlab.com:53783/threeamigojokes', {useNewUrlParser: true});
 
-app.use(express.json());
-app.use(express.static('filer'));
+
 
 app.set('view engine', 'hbs');
 app.set('views', 'templates');
@@ -19,24 +18,19 @@ hbs.registerPartials('templates');
 const Joke = new require('./models/Joke');
 
 const jokeService = {
-    siteName : 'JokeService After Dark',
-    siteAddress : 'http://JokeService-After-Dark.herokuapp.com',
-    siteSecret : 'simonLugterAfOst'};
+    name : 'JokeService After Dark',
+    address : 'http://jokeService-after-dark.herokuapp.com',
+    secret : 'simonLugterAfOst'};
 
-//Site fetch time er defineret i millisekunder, 5000 er default
-let siteFetchTime = [5000];
-let siteBlacklist = [];
-
+app.use(express.json());
+app.use(express.static('templates'));
 
 
 app.get('/', function (req, res) {
     getOtherSites().then(result => {
-
         res.render('index', {jokeservice:result})
     })
 });
-
-
 
 app.post('/api/jokes', function (req, res) {
    createJoke(req.body.setup, req.body.punchline).then(result =>{
@@ -59,7 +53,7 @@ app.get('/api/othersites', function (req, res) {
     getOtherSites().then(result =>{
         res.json(result);
     }).catch(error =>{
-        res.json({message:error.message})
+        res.send(error)
     })
 });
 
@@ -67,8 +61,7 @@ app.get('/api/otherjokes/:site', function (req, res) {
    getOtherJokes(req.params.site).then(result =>{
      res.json(result);
    }).catch(error =>{
-       console.log(error);
-       res.json({message:error.message})
+       res.status(400)
    })
 });
 
@@ -81,33 +74,17 @@ function getOtherJokes(site) {
      return getOtherSites()
         .then(result => {
                 for(let e of result){
-                    if(!siteBlacklist.includes(e.address)) {
                         if (e._id === site || e.name === site) {
-
-                            let firstTime = Date.now();
-                            if (siteFetchTime.length > 30) {
-                                siteFetchTime = [5000];
+                            if(!e.address.endsWith("/")){
+                                e.address += "/";
                             }
-
-                            let timeout = setTimeout(addToBlacklist, getAverageFetchTime(), e.address);
-
                             return fetch((e.address + 'api/jokes'), {method: "GET"})
                                 .then(res => {
-                                    let secondTime = Date.now();
-                                    siteFetchTime.push((secondTime - firstTime));
-                                    clearTimeout(timeout);
-
                                     return res.json();
-                                })
-                        }else{
-                            throw new Error('Could not find site');
+                                }).catch(error => {throw new Error(error.message)})
                         }
-                    }else{
-                        throw new Error('Site is Blacklisted');
                     }
-                }
-        })
-        .catch(error => {throw new Error(error)});
+        }).catch(error => {throw new Error(error.message)})
 }
 
 /**
@@ -120,7 +97,7 @@ function getOtherSites() {
             if (result.status>= 400) throw new Error(result.status);
             else return result.json();
             })
-        .catch(error => {throw new Error(error)});
+        .catch(error => {throw new Error(error.message)});
 }
 
 function getJokes(){
@@ -133,56 +110,42 @@ function createJoke(jokeSetup, jokePunchline) {
             setup:jokeSetup,
             punchline: jokePunchline
         });
-        newJoke.save();
+       return newJoke.save();
     }
 }
 
 
-
-function getAverageFetchTime(){
-    if(siteFetchTime.length === 0){
-        return siteFetchTime[0];
+getOtherSites().then(currentjokeservices =>{
+    for(let e of currentjokeservices){
+        if(e.name === jokeService.name || e.address === jokeService.address){
+            found = true;
+            break;
+        }
     }
-    let sum = 0;
-    for (let i = 0; i < siteFetchTime.length ; i++) {
-        sum += siteFetchTime[i];
+
+    let found = false;
+
+    console.log(found);
+
+    if(!found){
+        fetch('http://krdo-joke-registry.herokuapp.com/api/services', { method: "POST",
+            body:JSON.stringify(jokeService),
+            headers:{'Content-Type':'application/json'}})
+            .then(resultat => {
+                if (resultat.status >= 400)
+                    throw new Error(resultat.status);
+                else{
+                    console.log(resultat)
+                }
+            })
+            .catch(fejl => console.log('Registry Fejl: ' + fejl));
     }
-    return (sum / siteFetchTime.length)
-}
 
-function addToBlacklist(address){
-    siteBlacklist.push(address);
-    return new Error('Request has taken too long and has been canceled');
-}
-
-// createJoke("Hvorfor gik hønen over vejen", "for at komme over på den anden side");
-
-
-let currentjokeservices = [];
-getOtherSites().then(res =>{
-    currentjokeservices = res;
 });
-let found = false;
 
-for(let e of currentjokeservices){
-    if(e.name === jokeService.siteName || e.address === jokeService.siteAddress){
-        found = true;
-        break;
-    }
-}
 
-if(!found){
-    fetch('http://krdo-joke-registry.heroku.com', { method: "POST",
-        body:jokeService,
-        headers:{'Content-Type':'application/json'}})
-        .then(resultat => {
-            if (resultat.status >= 400)
-                throw new Error(resultat.status);
-        })
-        .catch(fejl => console.log('Fejl: ' + fejl));
-}
 
-let port = process.env.PORT || 8080
+let port = process.env.PORT || 8080;
 app.listen(port);
-console.log('Lytter på port 8080 ...');
+console.log('Lytter på port '+port+' ...');
 

@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "dependencies": {
     "express": "^4.16.4",
+    "handlebars": "^4.0.12",
     "hbs": "^4.0.1",
     "mongo": "^0.1.0",
     "mongodb": "latest",
